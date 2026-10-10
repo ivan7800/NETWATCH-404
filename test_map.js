@@ -1,0 +1,3 @@
+'use strict';const assert=require('node:assert/strict');const {groups,layout,matches}=require('./map_view.js');
+const data=Array.from({length:58},(_,i)=>({ip:`192.168.1.${i+1}`,interface:i<35?'Wi-Fi':'Ethernet',hostname:`equipo-${i}`}));
+assert.equal(groups(data).length,2);assert.equal(layout(data).nodes.length,58);assert.ok(layout(data).nodes[57].y>layout(data).nodes[0].y);assert.equal(matches(data[15],'192.168.1.16'),true);assert.equal(matches(data[15],'neverfound'),false);assert.equal(layout([]).nodes.length,0);console.log('OK: 6 comprobaciones de mapa (58 dispositivos, grupos, búsqueda y mapa vacío)');

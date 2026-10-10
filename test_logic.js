@@ -1,0 +1,17 @@
+'use strict';
+const fs=require('fs'),vm=require('vm'),assert=require('assert');
+const source=fs.readFileSync(__dirname+'/app.js','utf8');
+const start=source.indexOf('function identity('),end=source.indexOf('function renderChanges(');
+assert(start>=0&&end>start);
+const code=source.slice(start,end);
+const ctx={safeArr:x=>Array.isArray(x)?x:[],localStorage:{getItem(){return null}},snapshot:{mode:'empty'}};
+vm.createContext(ctx);
+vm.runInContext(code+'\nthis.compare=compareSnapshots;',ctx);
+const a={collectedAt:'2026-10-10T11:00:00Z',devices:[{ip:'10.0.0.2',interface:'Eth',mac:'BB'},{ip:'10.0.0.3',interface:'Eth',mac:'CC'}],gateways:[{ip:'10.0.0.1',reachable:false}]};
+const b={collectedAt:'2026-10-10T10:00:00Z',devices:[{ip:'10.0.0.2',interface:'Eth',mac:'AA'},{ip:'10.0.0.4',interface:'Eth',mac:'DD'}],gateways:[{ip:'10.0.0.1',reachable:true}]};
+const out=ctx.compare(a,b);
+assert.equal(out.changedMac.length,1);assert.equal(out.changedMac[0].from,'AA');assert.equal(out.changedMac[0].to,'BB');
+assert.equal(out.added.length,1);assert.equal(out.missing.length,1);assert.equal(out.changedGateways.length,1);
+const other=ctx.compare(a,{...b,devices:[{ip:'10.0.0.2',interface:'Wi-Fi',mac:'AA'}]});
+assert.equal(other.added.length,2);assert.equal(other.missing.length,1);
+console.log('PASS pruebas de lógica: MAC, altas/bajas, gateway, interfaces');
